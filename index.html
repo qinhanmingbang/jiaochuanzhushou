@@ -1,61 +1,62 @@
-<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>交传助手</title>
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><title>交传助手</title>
 <style>
-:root{--bg:#eef2f9;--c:#fff;--t:#1c2333;--m:#6f7a8f;--p:#3b6cf5;--ok:#17a35b;--no:#e0454f;--b:#e3e8f2}
-@media(prefers-color-scheme:dark){:root{--bg:#0f131b;--c:#1a2030;--t:#e8ecf4;--m:#97a3b8;--p:#6f95ff;--ok:#3fcf85;--no:#f4777f;--b:#2a3347}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:16px/1.6 -apple-system,"PingFang SC",sans-serif}
-main{max-width:900px;margin:0 auto;padding:12px}.card{background:var(--c);border-radius:16px;padding:14px;margin:10px 0;box-shadow:0 6px 24px rgba(40,60,120,.08)}
-button{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:8px 14px;cursor:pointer}
-.pri{background:var(--p);color:#fff;border:0}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.seg button.on{background:var(--p);color:#fff;border-color:var(--p)}
-#mic{font-size:20px;padding:14px 26px}#mic.rec{background:var(--no);color:#fff;border:0;animation:pl 1.2s infinite}@keyframes pl{50%{opacity:.7}}
-textarea,#out{width:100%;min-height:170px;border:1px solid var(--b);border-radius:12px;padding:12px;background:var(--bg);color:var(--t);font:inherit;font-size:var(--fs,24px);line-height:1.5;resize:vertical;white-space:pre-wrap}
-.m{color:var(--m);font-size:13px}.st div{margin:3px 0}
+:root{--bg:#eef2f9;--c:#fff;--t:#1c2333;--m:#6f7a8f;--p:#3b6cf5;--no:#e0454f;--b:#e3e8f2}
+@media(prefers-color-scheme:dark){:root{--bg:#0f131b;--c:#1a2030;--t:#e8ecf4;--m:#97a3b8;--p:#6f95ff;--no:#f4777f;--b:#2a3347}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:16px/1.6 -apple-system,"PingFang SC",sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:800px;margin:0 auto;padding:10px}.card{background:var(--c);border-radius:16px;padding:12px;margin:10px 0}
+button,select{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--b);border-radius:12px;padding:10px 14px}
+.pri{background:var(--p);color:#fff;border:0}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.seg .on{background:var(--p);color:#fff}
+#mic{width:100%;font-size:20px;padding:16px;margin:8px 0}#mic.rec{background:var(--no);animation:pl 1.2s infinite}@keyframes pl{50%{opacity:.7}}
+textarea,#out{width:100%;min-height:150px;border:1px solid var(--b);border-radius:12px;padding:10px;background:var(--bg);color:var(--t);font:inherit;font-size:var(--fs,22px);line-height:1.5;white-space:pre-wrap}
+.m{color:var(--m);font-size:13px}
 </style></head><body><main>
-<div class="card"><div class="row" style="justify-content:space-between"><b>交传助手 · 本地识别 + 本地翻译</b><button onclick="$('st').hidden=!$('st').hidden">环境检查</button></div>
-<div id="st" class="st m" style="margin-top:8px"></div></div>
-<div class="card"><div class="row"><span class="seg"><button id="s_en" class="on" onclick="setL('en')">对方说英文</button> <button id="s_zh" onclick="setL('zh')">对方说中文</button></span>
-<button id="mic" class="pri" onclick="toggle()">🎤 开始听（空格）</button><span id="mm" class="m"></span></div>
-<p class="m" style="margin:6px 0">识别文字可直接修改后再翻译。</p><textarea id="src" placeholder="识别出的文字显示在这里…"></textarea>
-<div class="row" style="margin-top:8px"><button class="pri" onclick="doT(false)" style="font-size:18px">翻译全部（Enter）</button><button onclick="doT(true)">只译新增部分</button><button onclick="clr()">清空</button><button onclick="fs(4)">A+</button><button onclick="fs(-4)">A−</button><span id="tm" class="m"></span></div></div>
-<div class="card"><b>译文</b><div id="out" style="margin-top:6px"></div><div class="row" style="margin-top:8px"><button onclick="navigator.clipboard.writeText($('out').textContent)">复制译文</button></div></div>
-<label class="m"><input type="checkbox" id="net"> 本地识别不可用时，允许联网识别（勾选后不再保证离线）</label></main>
-<script>
-const $=id=>document.getElementById(id),SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-const SP={en:'en-US',zh:'zh-CN'},TL={en:'zh',zh:'en'},NM={en:'英文',zh:'中文'};
-let L='en',on=false,rec=null,base='',done=0,T={},size=24;
-function setL(l){if(on)toggle();L=l;$('s_en').className=l=='en'?'on':'';$('s_zh').className=l=='zh'?'on':''}
-function fs(d){size=Math.max(14,size+d);document.documentElement.style.setProperty('--fs',size+'px')}
-function clr(){if(on)toggle();$('src').value='';$('out').textContent='';base='';done=0}
-function toggle(){on?stop():listen()}
-function stop(){on=false;$('mic').className='pri';$('mic').textContent='🎤 开始听（空格）';$('mm').textContent='';if(rec){rec.onend=null;try{rec.stop()}catch(e){}}}
-function listen(){
- if(!SR)return alert('此浏览器不支持语音识别，请用 Chrome（电脑版）');
- const r=rec=new SR();r.lang=SP[L];r.continuous=true;r.interimResults=true;
- const local='processLocally' in r&&!$('net').checked;if('processLocally' in r)r.processLocally=local;
- base=$('src').value;if(base&&!/\s$/.test(base))base+=L=='en'?' ':'';
- r.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)base+=t+(L=='en'?' ':'');else it+=t}
-  $('src').value=base+it;$('src').scrollTop=1e9};
- r.onerror=e=>{$('mm').textContent='识别出错：'+e.error+(e.error=='language-not-supported'?'（请先在「环境检查」里下载离线语言包）':'')};
- r.onend=()=>{if(on)setTimeout(()=>{try{r.start()}catch(e){}},150)};
- try{r.start();on=true;$('mic').className='pri rec';$('mic').textContent='⏹ 停止（空格）';$('mm').textContent=local?'本地识别中':'⚠️ 可能在联网识别'}catch(e){$('mm').textContent='无法启动：'+e.message}}
-async function getT(l){if(T[l])return T[l];if(!('Translator' in self))throw Error('此浏览器没有本地翻译功能，请用 Chrome 138 以上的电脑版');
- return T[l]=await Translator.create({sourceLanguage:l,targetLanguage:TL[l]})}
-async function doT(inc){let s=$('src').value;if(inc)s=s.slice(done);s=s.trim();if(!s)return;
- const t0=performance.now(),o=$('out');if(!inc)o.textContent='';
- try{const tr=await getT(L),parts=s.match(/[^.!?。！？\n]+[.!?。！？]*/g)||[s];
-  for(const p of parts){o.textContent+=(o.textContent?'\n':'')+await tr.translate(p.trim())}
-  done=$('src').value.length;$('tm').textContent='用时 '+Math.round(performance.now()-t0)+' 毫秒'}
- catch(e){o.textContent='翻译失败：'+e.message+'（请先在「环境检查」里下载离线翻译包）'}}
-async function check(){const h=[];
- for(const l of['en','zh']){let s='不支持';
-  if(SR&&SR.available){try{s=await SR.available({langs:[SP[l]],processLocally:true})}catch(e){s='检查失败'}}
-  h.push(`<div>${NM[l]}语音识别（本地）：<b>${s}</b> ${s=='downloadable'?`<button onclick="inst('${l}')">下载</button>`:''}</div>`)}
- for(const l of['en','zh']){let s='不支持';
-  if('Translator' in self){try{s=await Translator.availability({sourceLanguage:l,targetLanguage:TL[l]})}catch(e){s='检查失败'}}
-  h.push(`<div>${NM[l]}→${NM[TL[l]]}翻译（本地）：<b>${s}</b> ${s!='available'&&s!='不支持'?`<button onclick="instT('${l}')">下载</button>`:''}</div>`)}
- h.push('<div>状态为 available 即可完全断网使用。下载只需联网一次。</div>');$('st').innerHTML=h.join('')}
-async function inst(l){$('st').insertAdjacentHTML('beforeend','<div>下载中，请稍候…</div>');try{await SR.install({langs:[SP[l]]})}catch(e){alert('下载失败：'+e.message)}check()}
-async function instT(l){try{T[l]=await Translator.create({sourceLanguage:l,targetLanguage:TL[l],monitor(m){m.addEventListener('downloadprogress',e=>$('st').insertAdjacentHTML('beforeend',`<div>下载 ${Math.round(e.loaded*100)}%</div>`))}})}catch(e){alert('下载失败：'+e.message)}check()}
-document.addEventListener('keydown',e=>{if(e.target.tagName=='TEXTAREA'||e.target.tagName=='INPUT')return;if(e.code=='Space'){e.preventDefault();toggle()}else if(e.key=='Enter')doT(false)});
-check();
+<div class="card"><b>交传助手（手机/电脑通用）</b>
+<p class="m" style="margin:4px 0">首次使用请联网点「下载离线模型」（约 200–300MB，Wi-Fi 下进行）。下载完成后可断网使用。</p>
+<div class="row"><button class="pri" onclick="pre()">下载离线模型</button>
+<select id="eng"><option value="w">离线识别（Whisper，断网可用）</option><option value="s">系统听写（快，可能联网）</option></select></div>
+<div id="st" class="m" style="margin-top:6px">就绪</div></div>
+<div class="card"><div class="row seg"><button id="s_en" class="on" onclick="setL('en')">对方说英文</button><button id="s_zh" onclick="setL('zh')">对方说中文</button></div>
+<button id="mic" class="pri" onclick="toggle()">🎤 点一下开始录音</button>
+<textarea id="src" placeholder="识别出的文字显示在这里，可直接修改…"></textarea>
+<div class="row" style="margin-top:8px"><button class="pri" onclick="tr()" style="font-size:18px">翻译</button><button onclick="clr()">清空</button><button onclick="fs(4)">A+</button><button onclick="fs(-4)">A−</button></div></div>
+<div class="card"><b>译文</b><div id="out" style="margin-top:6px"></div></div>
+<p class="m">提示：iPhone 请用 Safari 打开，点分享按钮 →「添加到主屏幕」，再从主屏幕图标打开，离线数据更不容易被系统清掉。</p></main>
+<script type="module">
+import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1';
+env.allowLocalModels=false;
+const $=id=>document.getElementById(id),TL={en:'zh',zh:'en'},NM={asr:'识别模型',en:'英译中模型',zh:'中译英模型'};
+const MODEL={asr:'Xenova/whisper-base',en:'Xenova/opus-mt-en-zh',zh:'Xenova/opus-mt-zh-en'};
+let L='en',P={},rc=null,stream=null,chunks=[],sr=null,want=false,base='',size=22;
+const say=t=>$('st').textContent=t;
+window.setL=l=>{if(rc||sr)toggle();L=l;$('s_en').className=l=='en'?'on':'';$('s_zh').className=l=='zh'?'on':''};
+window.fs=d=>{size=Math.max(14,size+d);document.documentElement.style.setProperty('--fs',size+'px')};
+window.clr=()=>{$('src').value='';$('out').textContent=''};
+function load(k){return P[k]||(P[k]=pipeline(k=='asr'?'automatic-speech-recognition':'translation',MODEL[k],{progress_callback:p=>{if(p.status=='progress')say(`加载${NM[k]}：${String(p.file).split('/').pop()} ${Math.round(p.progress)}%`)}}).catch(e=>{delete P[k];throw e}))}
+window.pre=async()=>{try{for(const k of['asr','en','zh']){const m=await load(k);if(m.dispose)await m.dispose();delete P[k]}say('✅ 三个模型都已下载，之后可断网使用')}catch(e){say('下载失败：'+e.message+'（请确认已联网）')}};
+const btn=on=>{$('mic').className='pri'+(on?' rec':'');$('mic').textContent=on?'⏹ 点一下结束并识别':'🎤 点一下开始录音'};
+async function f32(blob){const AC=window.AudioContext||window.webkitAudioContext,c=new AC(),b=await c.decodeAudioData(await blob.arrayBuffer());c.close();
+ const o=new OfflineAudioContext(1,Math.ceil(b.duration*16000),16000),s=o.createBufferSource();s.buffer=b;s.connect(o.destination);s.start();return (await o.startRendering()).getChannelData(0)}
+window.toggle=async()=>{
+ if($('eng').value=='s')return sys();
+ if(rc){rc.stop();return}
+ try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){return say('无法使用麦克风：'+e.message)}
+ chunks=[];rc=new MediaRecorder(stream);rc.ondataavailable=e=>chunks.push(e.data);
+ rc.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const b=new Blob(chunks,{type:rc.mimeType});rc=null;btn(false);await asr(b)};
+ rc.start();btn(true);say('录音中…')};
+async function asr(blob){const t0=performance.now();try{say('识别中…');const a=await f32(blob),m=await load('asr');
+ const r=await m(a,{language:L=='en'?'english':'chinese',task:'transcribe',chunk_length_s:30,stride_length_s:5});
+ const s=$('src');s.value+=(s.value&&!/\s$/.test(s.value)?' ':'')+r.text.trim();say(`识别完成，用时 ${((performance.now()-t0)/1000).toFixed(1)} 秒`)}catch(e){say('识别失败：'+e.message)}}
+function sys(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return say('此浏览器不支持系统听写');
+ if(want){want=false;sr&&sr.stop();btn(false);return}
+ want=true;base=$('src').value;if(base&&!/\s$/.test(base)&&L=='en')base+=' ';
+ const go=()=>{sr=new SR();sr.lang=L=='en'?'en-US':'zh-CN';sr.continuous=true;sr.interimResults=true;
+  sr.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)base+=t+(L=='en'?' ':'');else it+=t}$('src').value=base+it};
+  sr.onerror=e=>say('听写出错：'+e.error);sr.onend=()=>{if(want)try{go()}catch(e){}};sr.start()};
+ go();btn(true);say('系统听写中（可能联网）')}
+window.tr=async()=>{const s=$('src').value.trim();if(!s)return;const t0=performance.now(),o=$('out');o.textContent='';
+ try{let T=null;if('Translator' in self){try{T=await Translator.create({sourceLanguage:L,targetLanguage:TL[L]})}catch(e){}}
+  const m=T?null:await load(L),parts=s.match(/[^.!?。！？\n]+[.!?。！？]*/g)||[s];
+  for(const p of parts){const x=T?await T.translate(p.trim()):(await m(p.trim()))[0].translation_text;o.textContent+=(o.textContent?'\n':'')+x}
+  say(`翻译完成，用时 ${((performance.now()-t0)/1000).toFixed(1)} 秒`)}catch(e){say('翻译失败：'+e.message)}};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
