@@ -1,62 +1,71 @@
-<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><title>交传助手</title>
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0b1020"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-512.png"><link rel="manifest" href="manifest.json"><meta name="apple-mobile-web-app-title" content="交传助手"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>交传助手</title>
 <style>
-:root{--bg:#eef2f9;--c:#fff;--t:#1c2333;--m:#6f7a8f;--p:#3b6cf5;--no:#e0454f;--b:#e3e8f2}
-@media(prefers-color-scheme:dark){:root{--bg:#0f131b;--c:#1a2030;--t:#e8ecf4;--m:#97a3b8;--p:#6f95ff;--no:#f4777f;--b:#2a3347}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:16px/1.6 -apple-system,"PingFang SC",sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-main{max-width:800px;margin:0 auto;padding:10px}.card{background:var(--c);border-radius:16px;padding:12px;margin:10px 0}
-button,select{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--b);border-radius:12px;padding:10px 14px}
-.pri{background:var(--p);color:#fff;border:0}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.seg .on{background:var(--p);color:#fff}
-#mic{width:100%;font-size:20px;padding:16px;margin:8px 0}#mic.rec{background:var(--no);animation:pl 1.2s infinite}@keyframes pl{50%{opacity:.7}}
-textarea,#out{width:100%;min-height:150px;border:1px solid var(--b);border-radius:12px;padding:10px;background:var(--bg);color:var(--t);font:inherit;font-size:var(--fs,22px);line-height:1.5;white-space:pre-wrap}
-.m{color:var(--m);font-size:13px}
-</style></head><body><main>
-<div class="card"><b>交传助手（手机/电脑通用）</b>
-<p class="m" style="margin:4px 0">首次使用请联网点「下载离线模型」（约 200–300MB，Wi-Fi 下进行）。下载完成后可断网使用。</p>
-<div class="row"><button class="pri" onclick="pre()">下载离线模型</button>
-<select id="eng"><option value="w">离线识别（Whisper，断网可用）</option><option value="s">系统听写（快，可能联网）</option></select></div>
-<div id="st" class="m" style="margin-top:6px">就绪</div></div>
-<div class="card"><div class="row seg"><button id="s_en" class="on" onclick="setL('en')">对方说英文</button><button id="s_zh" onclick="setL('zh')">对方说中文</button></div>
-<button id="mic" class="pri" onclick="toggle()">🎤 点一下开始录音</button>
-<textarea id="src" placeholder="识别出的文字显示在这里，可直接修改…"></textarea>
-<div class="row" style="margin-top:8px"><button class="pri" onclick="tr()" style="font-size:18px">翻译</button><button onclick="clr()">清空</button><button onclick="fs(4)">A+</button><button onclick="fs(-4)">A−</button></div></div>
-<div class="card"><b>译文</b><div id="out" style="margin-top:6px"></div></div>
-<p class="m">提示：iPhone 请用 Safari 打开，点分享按钮 →「添加到主屏幕」，再从主屏幕图标打开，离线数据更不容易被系统清掉。</p></main>
+:root{--bg:#0b1020;--c:#141b30;--t:#eaf0ff;--m:#8d9bbd;--a:#5eead4;--a2:#7c9cff;--no:#ff6b81;--b:#242e4d}
+[data-t=light]{--bg:#f3f6fc;--c:#fff;--t:#1b2233;--m:#6b7791;--a:#0ea5a0;--a2:#3b6cf5;--no:#e0454f;--b:#dde4f1}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--t);font:16px/1.6 -apple-system,"PingFang SC",sans-serif}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:860px;margin:0 auto;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+header{display:flex;align-items:center;gap:8px;padding:8px 2px}header b{background:linear-gradient(90deg,var(--a),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent;font-size:18px}
+#st{flex:1;color:var(--m);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#q{color:var(--a);font-size:12px}
+button,select{font:inherit;color:var(--t);background:var(--c);border:1px solid var(--b);border-radius:12px;padding:7px 12px}
+#set{background:var(--c);border-radius:14px;padding:10px;margin-bottom:8px;display:grid;gap:8px}#set[hidden]{display:none}
+#box{flex:1;overflow:auto;background:var(--c);border-radius:16px;padding:12px 14px;border:1px solid var(--b)}
+#txt{outline:0;font-size:var(--fs,22px);line-height:1.55}#txt:empty::before{content:attr(data-ph);color:var(--m);font-size:15px}
+#txt p{margin:0 0 .55em}#itm{color:var(--m);font-size:var(--fs,22px)}
+footer{padding:8px 0}.row{display:flex;gap:6px;align-items:center}.seg{display:flex;flex:1}.seg button{flex:1;border-radius:0;padding:7px 4px}.seg button:first-child{border-radius:12px 0 0 12px}.seg button:last-child{border-radius:0 12px 12px 0}
+.seg .on{background:linear-gradient(135deg,var(--a2),var(--a));color:#06121f;border-color:transparent;font-weight:700}
+#lv{height:4px;background:var(--b);border-radius:2px;margin:8px 0}#lv i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--a2));border-radius:2px}
+#mic{width:100%;font-size:19px;font-weight:700;padding:15px;border:0;color:#06121f;background:linear-gradient(135deg,var(--a2),var(--a))}#mic.rec{background:var(--no);color:#fff;animation:pl 1.3s infinite}@keyframes pl{50%{opacity:.75}}
+</style></head><body><div id="app">
+<header><b>交传助手</b><span id="st">就绪</span><span id="q"></span><button onclick="$('set').hidden=!$('set').hidden">⚙︎</button></header>
+<div id="set" hidden><div class="row"><button onclick="dl()">下载离线模型</button><select id="mdl" style="flex:1"><option value="base">精准（base，约 100MB）</option><option value="tiny">更快（tiny，约 40MB）</option></select></div>
+<div class="row"><select id="eng" style="flex:1"><option value="w">离线识别（断网可用，自动分句加标点）</option><option value="s">系统听写（可能联网，标点较少）</option></select><button onclick="theme()">深色/浅色</button></div>
+<div class="m" style="color:var(--m);font-size:12px">首次请连 Wi-Fi 下载模型，之后断网可用。iPhone 请用 Safari 添加到主屏幕。</div></div>
+<div id="box"><div id="txt" contenteditable data-ph="点下方按钮开始。对方每说完一句停顿一下，这一句就会带标点出现在这里，可直接点击修改。"></div><div id="itm"></div></div>
+<footer><div id="lv"><i></i></div>
+<div class="row" style="margin-bottom:8px"><span class="seg"><button id="l_en" onclick="setL('en')">英文</button><button id="l_zh" onclick="setL('zh')">中文</button><button id="l_auto" onclick="setL('auto')">自动</button></span><button onclick="fs(-3)">A−</button><button onclick="fs(3)">A+</button><button onclick="cp()">复制</button><button onclick="$('txt').innerHTML=''">清空</button></div>
+<button id="mic" onclick="toggle()">🎤 开始听</button></footer></div>
 <script type="module">
 import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1';
 env.allowLocalModels=false;
-const $=id=>document.getElementById(id),TL={en:'zh',zh:'en'},NM={asr:'识别模型',en:'英译中模型',zh:'中译英模型'};
-const MODEL={asr:'Xenova/whisper-base',en:'Xenova/opus-mt-en-zh',zh:'Xenova/opus-mt-zh-en'};
-let L='en',P={},rc=null,stream=null,chunks=[],sr=null,want=false,base='',size=22;
-const say=t=>$('st').textContent=t;
-window.setL=l=>{if(rc||sr)toggle();L=l;$('s_en').className=l=='en'?'on':'';$('s_zh').className=l=='zh'?'on':''};
-window.fs=d=>{size=Math.max(14,size+d);document.documentElement.style.setProperty('--fs',size+'px')};
-window.clr=()=>{$('src').value='';$('out').textContent=''};
-function load(k){return P[k]||(P[k]=pipeline(k=='asr'?'automatic-speech-recognition':'translation',MODEL[k],{progress_callback:p=>{if(p.status=='progress')say(`加载${NM[k]}：${String(p.file).split('/').pop()} ${Math.round(p.progress)}%`)}}).catch(e=>{delete P[k];throw e}))}
-window.pre=async()=>{try{for(const k of['asr','en','zh']){const m=await load(k);if(m.dispose)await m.dispose();delete P[k]}say('✅ 三个模型都已下载，之后可断网使用')}catch(e){say('下载失败：'+e.message+'（请确认已联网）')}};
-const btn=on=>{$('mic').className='pri'+(on?' rec':'');$('mic').textContent=on?'⏹ 点一下结束并识别':'🎤 点一下开始录音'};
-async function f32(blob){const AC=window.AudioContext||window.webkitAudioContext,c=new AC(),b=await c.decodeAudioData(await blob.arrayBuffer());c.close();
- const o=new OfflineAudioContext(1,Math.ceil(b.duration*16000),16000),s=o.createBufferSource();s.buffer=b;s.connect(o.destination);s.start();return (await o.startRendering()).getChannelData(0)}
-window.toggle=async()=>{
- if($('eng').value=='s')return sys();
- if(rc){rc.stop();return}
- try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){return say('无法使用麦克风：'+e.message)}
- chunks=[];rc=new MediaRecorder(stream);rc.ondataavailable=e=>chunks.push(e.data);
- rc.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const b=new Blob(chunks,{type:rc.mimeType});rc=null;btn(false);await asr(b)};
- rc.start();btn(true);say('录音中…')};
-async function asr(blob){const t0=performance.now();try{say('识别中…');const a=await f32(blob),m=await load('asr');
- const r=await m(a,{language:L=='en'?'english':'chinese',task:'transcribe',chunk_length_s:30,stride_length_s:5});
- const s=$('src');s.value+=(s.value&&!/\s$/.test(s.value)?' ':'')+r.text.trim();say(`识别完成，用时 ${((performance.now()-t0)/1000).toFixed(1)} 秒`)}catch(e){say('识别失败：'+e.message)}}
-function sys(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return say('此浏览器不支持系统听写');
- if(want){want=false;sr&&sr.stop();btn(false);return}
- want=true;base=$('src').value;if(base&&!/\s$/.test(base)&&L=='en')base+=' ';
- const go=()=>{sr=new SR();sr.lang=L=='en'?'en-US':'zh-CN';sr.continuous=true;sr.interimResults=true;
-  sr.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)base+=t+(L=='en'?' ':'');else it+=t}$('src').value=base+it};
-  sr.onerror=e=>say('听写出错：'+e.error);sr.onend=()=>{if(want)try{go()}catch(e){}};sr.start()};
- go();btn(true);say('系统听写中（可能联网）')}
-window.tr=async()=>{const s=$('src').value.trim();if(!s)return;const t0=performance.now(),o=$('out');o.textContent='';
- try{let T=null;if('Translator' in self){try{T=await Translator.create({sourceLanguage:L,targetLanguage:TL[L]})}catch(e){}}
-  const m=T?null:await load(L),parts=s.match(/[^.!?。！？\n]+[.!?。！？]*/g)||[s];
-  for(const p of parts){const x=T?await T.translate(p.trim()):(await m(p.trim()))[0].translation_text;o.textContent+=(o.textContent?'\n':'')+x}
-  say(`翻译完成，用时 ${((performance.now()-t0)/1000).toFixed(1)} 秒`)}catch(e){say('翻译失败：'+e.message)}};
+const $=id=>document.getElementById(id),R=document.documentElement,MS={tiny:'Xenova/whisper-tiny',base:'Xenova/whisper-base'};
+const BAD=/^(thank you\.?|thanks for watching[.!]?|you\.?|谢谢观看。?|请订阅.*|字幕.*|感谢观看。?)$/i;
+let L=localStorage.L||'en',size=+localStorage.fs||22,P={},on=false,ctx,stream,node,buf=[],pre=[],speak=false,sil=0,noise=.005,busy=0,chain=Promise.resolve(),lock=null,sr=null,want=false;
+const say=t=>$('st').textContent=t,scroll=()=>{const b=$('box');b.scrollTop=b.scrollHeight};
+R.dataset.t=localStorage.t||'dark';$('mdl').value=localStorage.m||'base';$('mdl').onchange=()=>localStorage.m=$('mdl').value;
+window.$=$;window.theme=()=>{R.dataset.t=localStorage.t=R.dataset.t=='dark'?'light':'dark'};
+window.fs=d=>{size=Math.max(14,Math.min(48,size+d));localStorage.fs=size;R.style.setProperty('--fs',size+'px')};fs(0);
+window.setL=l=>{if(want)stop();L=localStorage.L=l;for(const k of['en','zh','auto'])$('l_'+k).className=k==l?'on':''};setL(L);
+window.cp=()=>navigator.clipboard.writeText($('txt').innerText).then(()=>say('已复制'));
+const load=()=>{const k=$('mdl').value;return P[k]||(P[k]=pipeline('automatic-speech-recognition',MS[k],{progress_callback:p=>{if(p.status=='progress')say(`加载模型 ${Math.round(p.progress)}%`)}}).then(m=>{say('模型就绪');return m}).catch(e=>{delete P[k];throw e}))};
+window.dl=async()=>{try{await load();say('✅ 已下载，之后可断网使用')}catch(e){say('下载失败：'+e.message+'（请确认已联网）')}};
+const fix=t=>{t=t.trim().replace(/\s+/g,' ').replace(/\s*([\u4e00-\u9fff，。！？、；：])\s*/g,'$1');const zh=/[\u4e00-\u9fff]/.test(t);
+ if(!/[.!?。！？…"”]$/.test(t))t+=zh?'。':'.';return zh?t:t.charAt(0).toUpperCase()+t.slice(1)};
+function add(t){const p=document.createElement('p');p.textContent=fix(t);$('txt').appendChild(p);scroll()}
+const ui=o=>{$('mic').className=o?'rec':'';$('mic').textContent=o?'⏹ 停止':'🎤 开始听';if(!o)$('lv').firstChild.style.width=0};
+const qui=()=>$('q').textContent=busy?`识别中 ${busy}`:'';
+const ds=f=>{const r=ctx.sampleRate/16000,n=Math.floor(f.length/r),o=new Float32Array(n);for(let i=0;i<n;i++){const a=Math.floor(i*r),b=Math.max(a+1,Math.floor((i+1)*r));let s=0;for(let j=a;j<b;j++)s+=f[j];o[i]=s/(b-a)}return o};
+function feed(f){let s=0;for(let i=0;i<f.length;i++)s+=f[i]*f[i];const rms=Math.sqrt(s/f.length),ms=f.length/ctx.sampleRate*1000;
+ $('lv').firstChild.style.width=Math.min(100,rms*700)+'%';noise=Math.min(Math.max(rms<noise?rms:noise*1.003,.003),.05);
+ const v=rms>Math.max(.012,noise*3.5),d=ds(f);if(v){speak=true;sil=0}else if(speak)sil+=ms;
+ if(speak){if(pre.length){buf.push(...pre);pre=[]}buf.push(d)}else{pre.push(d);if(pre.length>3)pre.shift()}
+ const n=buf.reduce((a,b)=>a+b.length,0);if(speak&&(sil>=700||n>=16000*25))flush()}
+function flush(){const n=buf.reduce((a,b)=>a+b.length,0),a=new Float32Array(n);let o=0;for(const b of buf){a.set(b,o);o+=b.length}buf=[];speak=false;sil=0;if(n<16000*.6)return;
+ busy++;qui();chain=chain.then(()=>run(a)).catch(()=>{}).then(()=>{busy--;qui()})}
+async function run(a){const t0=performance.now();try{const m=await load(),lg=L=='auto'?{}:{language:L=='en'?'english':'chinese'};
+ const r=await m(a,{...lg,task:'transcribe'}),t=(r.text||'').trim();if(t.length>1&&!BAD.test(t))add(t);say(`本段识别用时 ${((performance.now()-t0)/1000).toFixed(1)} 秒`)}catch(e){say('识别失败：'+e.message)}}
+window.toggle=()=>(on||want)?stop():start();
+async function start(){if($('eng').value=='s')return sys();
+ const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC();ctx.resume();
+ try{stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:true,echoCancellation:false}})}catch(e){return say('无法使用麦克风：'+e.message)}
+ say('加载模型…');try{await load()}catch(e){stream.getTracks().forEach(t=>t.stop());return say('模型加载失败：'+e.message)}
+ await ctx.resume();const src=ctx.createMediaStreamSource(stream);node=ctx.createScriptProcessor(4096,1,1);node.onaudioprocess=e=>feed(e.inputBuffer.getChannelData(0));src.connect(node);node.connect(ctx.destination);
+ on=true;speak=false;sil=0;buf=[];pre=[];ui(true);try{lock=await navigator.wakeLock.request('screen')}catch(e){}say('听写中：说完一句停顿，就会出字')}
+function stop(){if(want){want=false;sr&&sr.stop();ui(false);$('itm').textContent='';return}
+ if(!on)return;on=false;if(speak)flush();node.disconnect();ctx.close();stream.getTracks().forEach(t=>t.stop());lock&&lock.release().catch(()=>{});ui(false);say(busy?'正在识别最后一句…':'已停止')}
+function sys(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return say('此浏览器不支持系统听写');want=true;
+ const go=()=>{sr=new SR();sr.lang=L=='zh'?'zh-CN':'en-US';sr.continuous=true;sr.interimResults=true;
+  sr.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal){if(t.trim())add(t)}else it+=t}$('itm').textContent=it;scroll()};
+  sr.onerror=e=>say('听写出错：'+e.error);sr.onend=()=>{if(want)try{go()}catch(e){}};sr.start()};go();ui(true);say('系统听写中（可能联网）')}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
